@@ -18,6 +18,15 @@ class JobApplicationAgents():
     agents: list[BaseAgent]
     tasks: list[Task]
 
+    def __init__(self, resume_path: str = RESUME_PATH, output_dir: str = "") -> None:
+        # resume_path: the resume the strategist may read (the tool is locked to this file).
+        # output_dir: relative folder for the .md outputs; "" keeps them in the project root.
+        self.resume_path = resume_path
+        self.output_dir = output_dir
+
+    def _out(self, name: str) -> str:
+        return f"{self.output_dir}/{name}" if self.output_dir else name
+
     @agent
     def job_analyst(self) -> Agent:
         return Agent(
@@ -30,7 +39,7 @@ class JobApplicationAgents():
     def resume_strategist(self) -> Agent:
         return Agent(
             config=self.agents_config['resume_strategist'], # type: ignore[index]
-            tools=[FileReadTool(file_path=RESUME_PATH)],
+            tools=[FileReadTool(file_path=self.resume_path)],
             verbose=True
         )
 
@@ -65,28 +74,28 @@ class JobApplicationAgents():
     def tailor_resume_task(self) -> Task:
         return Task(
             config=self.tasks_config['tailor_resume_task'], # type: ignore[index]
-            output_file='tailored_report.md'
+            output_file=self._out('tailored_report.md')
         )
 
     @task
     def cover_letter_task(self) -> Task:
         return Task(
             config=self.tasks_config['cover_letter_task'], # type: ignore[index]
-            output_file='cover_letter.md'
+            output_file=self._out('cover_letter.md')
         )
 
     @task
     def interview_prep_task(self) -> Task:
         return Task(
             config=self.tasks_config['interview_prep_task'], # type: ignore[index]
-            output_file='interview_prep.md'
+            output_file=self._out('interview_prep.md')
         )
 
     @task
     def match_report_task(self) -> Task:
         return Task(
             config=self.tasks_config['match_report_task'], # type: ignore[index]
-            output_file='match_report.md'
+            output_file=self._out('match_report.md')
         )
 
     @crew

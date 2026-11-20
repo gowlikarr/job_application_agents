@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Job Application Agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<style>
+:root {
+  --bg: #f6f7f9; --surface: #ffffff; --surface-2: #f1f3f6; --border: #e3e6eb;
+  --text: #16191f; --muted: #5d6573; --accent: #3b5bdb; --accent-ink: #ffffff;
+  --accent-soft: #e8edfd; --good: #2b8a3e; --warn: #c77c02; --bad: #c92a2a;
+  --radius: 12px; --shadow: 0 1px 2px rgba(16,24,40,.05), 0 4px 16px rgba(16,24,40,.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1115; --surface: #171a21; --surface-2: #1e222b; --border: #2a2f3a;
+    --text: #e8eaf0; --muted: #9aa3b2; --accent: #7c95f5; --accent-ink: #0f1115;
+    --accent-soft: #1f2843; --good: #51cf66; --warn: #fcc419; --bad: #ff6b6b;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.6 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+.wrap { max-width: 980px; margin: 0 auto; padding: 32px 16px 64px; }
+header h1 { font-size: 26px; margin: 0 0 4px; letter-spacing: -.02em; }
+header p { margin: 0 0 24px; color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 24px; margin-bottom: 20px; }
+label { display: block; font-weight: 600; margin-bottom: 6px; }
+.hint { color: var(--muted); font-size: 13px; margin-top: 4px; }
+input[type=url] { width: 100%; padding: 11px 12px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface); color: var(--text); font: inherit; }
+input[type=url]:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.field { margin-bottom: 18px; }
+.drop { border: 1.5px dashed var(--border); border-radius: 10px; padding: 22px; text-align: center;
+  cursor: pointer; background: var(--surface-2); transition: border-color .15s, background .15s; }
+.drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+.drop strong { color: var(--accent); }
+.drop .file { margin-top: 6px; font-weight: 600; word-break: break-all; }
+button { font: inherit; font-weight: 600; border: 0; border-radius: 8px; padding: 11px 20px; cursor: pointer; }
+.primary { background: var(--accent); color: var(--accent-ink); }
+.primary:disabled { opacity: .55; cursor: not-allowed; }
+.ghost { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); padding: 7px 12px; font-size: 13px; }
+.error { color: var(--bad); background: color-mix(in srgb, var(--bad) 10%, transparent);
+  border-radius: 8px; padding: 10px 12px; margin-top: 14px; display: none; }
+.steps { list-style: none; padding: 0; margin: 0; }
+.steps li { display: flex; align-items: center; gap: 12px; padding: 9px 0; color: var(--muted); }
+.steps li .dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  display: grid; place-items: center; font-size: 12px; flex: none; }
+.steps li.active { color: var(--text); font-weight: 600; }
+.steps li.active .dot { border-color: var(--accent); border-top-color: transparent; animation: spin 1s linear infinite; }
+.steps li.done { color: var(--text); }
+.steps li.done .dot { background: var(--good); border-color: var(--good); color: #fff; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.elapsed { color: var(--muted); font-size: 13px; margin-top: 8px; }
+.score { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+.gauge { --p: 0; --c: var(--accent); width: 112px; height: 112px; border-radius: 50%; flex: none;
+  background: conic-gradient(var(--c) calc(var(--p) * 1%), var(--surface-2) 0); display: grid; place-items: center; }
+.gauge span { width: 88px; height: 88px; border-radius: 50%; background: var(--surface);
+  display: grid; place-items: center; font-size: 26px; font-weight: 700; }
+.score h2 { margin: 0 0 4px; font-size: 20px; }
+.score p { margin: 0; color: var(--muted); }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); overflow-x: auto; margin: -6px -6px 18px; padding: 0 6px; }
+.tab { background: none; color: var(--muted); border-radius: 0; padding: 10px 14px; border-bottom: 2px solid transparent; white-space: nowrap; }
+.tab[aria-selected=true] { color: var(--accent); border-bottom-color: var(--accent); }
+.tab:disabled { opacity: .4; cursor: default; }
+.toolbar { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 8px; }
+.md { overflow-wrap: anywhere; }
+.md h1 { font-size: 22px; } .md h2 { font-size: 18px; margin-top: 1.6em; } .md h3 { font-size: 16px; }
+.md table { border-collapse: collapse; width: 100%; display: block; overflow-x: auto; }
+.md th, .md td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
+.md code { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+.md pre { background: var(--surface-2); padding: 12px; border-radius: 8px; overflow-x: auto; }
+.md blockquote { border-left: 3px solid var(--border); margin: 0; padding-left: 14px; color: var(--muted); }
+.md a { color: var(--accent); }
+.hidden { display: none !important; }
+.meta { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Job Application Agents</h1>
+    <p>Five AI agents read a job posting and your resume, then write a match report, a tailored resume, a cover letter and an interview study sheet.</p>
+  </header>
+
+  <form id="form" class="card" novalidate>
+    <div class="field">
+      <label for="job_url">Job posting URL</label>
+      <input id="job_url" name="job_url" type="url" required placeholder="https://boards.greenhouse.io/company/jobs/12345">
+      <div class="hint">Use a public link to an open posting. Pages behind a login can't be read.</div>
+    </div>
+    <div class="field">
+      <label for="resume">Resume (PDF)</label>
+      <div id="drop" class="drop" tabindex="0" role="button" aria-label="Choose resume PDF">
+        <div><strong>Choose a PDF</strong> or drag it here</div>
+        <div class="hint">Text-based PDF, up to 5 MB</div>
+        <div id="fileName" class="file"></div>
+      </div>
+      <input id="resume" name="resume" type="file" accept="application/pdf,.pdf" hidden>
+    </div>
+    <button id="submit" class="primary" type="submit">Analyze application</button>
+    <div id="formError" class="error" role="alert"></div>
+  </form>
+
+  <section id="progress" class="card hidden" aria-live="polite">
+    <h2 style="margin:0 0 4px;font-size:18px">Agents at work</h2>
+    <div class="meta" id="runMeta"></div>
+    <ul id="steps" class="steps" style="margin-top:10px"></ul>
+    <div class="elapsed" id="elapsed"></div>
+    <div id="runError" class="error" role="alert"></div>
+  </section>
+
+  <section id="results" class="hidden">
+    <div class="card score">
+      <div class="gauge" id="gauge"><span id="scoreNum">–</span></div>
+      <div>
+        <h2 id="scoreTitle">Match score</h2>
+        <p id="scoreSub">Details are in the match report below.</p>
+      </div>
+      <button class="ghost" id="again" type="button" style="margin-left:auto">New analysis</button>
+    </div>
+    <div class="card">
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <div class="toolbar">
+        <button class="ghost" id="copy" type="button">Copy</button>
+        <button class="ghost" id="download" type="button">Download .md</button>
+      </div>
+      <article id="doc" class="md"></article>
+    </div>
+  </section>
+</div>
+
+<script>
+const TABS = [
+  { key: "match_report",    label: "Match report",     file: "match_report.md" },
+  { key: "tailored_resume", label: "Tailored resume",  file: "tailored_resume.md" },
+  { key: "cover_letter",    label: "Cover letter",     file: "cover_letter.md" },
+  { key: "interview_prep",  label: "Interview prep",   file: "interview_prep.md" },
+  { key: "job_brief",       label: "Job brief",        file: "job_brief.md" },
+];
+const $ = (id) => document.getElementById(id);
+let file = null, pollTimer = null, clockTimer = null, results = {}, current = "match_report";
+
+// ---- file picking ----
+const drop = $("drop"), input = $("resume");
+const pick = (f) => {
+  if (!f) return;
+  if (!/\.pdf$/i.test(f.name) && f.type !== "application/pdf") return showErr($("formError"), "Please choose a PDF file.");
+  if (f.size > 5 * 1024 * 1024) return showErr($("formError"), "The PDF must be 5 MB or smaller.");
+  file = f; $("fileName").textContent = f.name; hideErr($("formError"));
+};
+drop.onclick = () => input.click();
+drop.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.click(); } };
+input.onchange = () => pick(input.files[0]);
+["dragenter", "dragover"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", e => pick(e.dataTransfer.files[0]));
+
+function showErr(el, msg) { el.textContent = msg; el.style.display = "block"; }
+function hideErr(el) { el.style.display = "none"; }
+
+// ---- submit ----
+$("form").onsubmit = async (e) => {
+  e.preventDefault();
+  hideErr($("formError"));
+  const url = $("job_url").value.trim();
+  if (!/^https?:\/\/\S+\.\S+/i.test(url)) return showErr($("formError"), "Enter the full job URL, starting with https://");
+  if (!file) return showErr($("formError"), "Choose your resume PDF.");
+
+  const body = new FormData();
+  body.append("job_url", url);
+  body.append("resume", file);
+  $("submit").disabled = true; $("submit").textContent = "Uploading…";
+  try {
+    const res = await fetch("/api/runs", { method: "POST", body });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || `Request failed (${res.status})`);
+    startTracking(data.run_id, url, file.name);
+  } catch (err) {
+    showErr($("formError"), err.message);
+    $("submit").disabled = false; $("submit").textContent = "Analyze application";
+  }
+};
+
+// ---- progress ----
+function startTracking(runId, url, name) {
+  try { localStorage.setItem("lastRun", runId); } catch {}
+  $("form").classList.add("hidden");
+  $("results").classList.add("hidden");
+  $("progress").classList.remove("hidden");
+  hideErr($("runError"));
+  $("runMeta").textContent = url ? `${name} · ${url}` : "";
+  const t0 = Date.now();
+  clearInterval(clockTimer);
+  clockTimer = setInterval(() => {
+    const s = Math.floor((Date.now() - t0) / 1000);
+    $("elapsed").textContent = `Elapsed ${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")} · usually takes 3–6 minutes`;
+  }, 1000);
+  poll(runId);
+}
+
+async function poll(runId) {
+  clearTimeout(pollTimer);
+  let run;
+  try {
+    const res = await fetch(`/api/runs/${runId}`);
+    run = await res.json();
+    if (!res.ok) throw new Error(run.detail || "Lost track of the run.");
+  } catch (err) {
+    clearInterval(clockTimer);
+    showErr($("runError"), err.message);
+    addRetry();
+    return;
+  }
+  if (!$("runMeta").textContent) $("runMeta").textContent = `${run.resume_name} · ${run.job_url}`;
+  renderSteps(run);
+  if (run.status === "done") { clearInterval(clockTimer); showResults(run); return; }
+  if (run.status === "error") {
+    clearInterval(clockTimer);
+    showErr($("runError"), "The agents stopped with an error: " + run.error);
+    addRetry();
+    return;
+  }
+  pollTimer = setTimeout(() => poll(runId), 3000);
+}
+
+function renderSteps(run) {
+  $("steps").innerHTML = "";
+  run.steps.forEach((label, i) => {
+    const li = document.createElement("li");
+    const state = i < run.step ? "done" : (i === run.step && run.status === "running" ? "active" : "");
+    if (state) li.className = state;
+    li.innerHTML = `<span class="dot">${state === "done" ? "✓" : ""}</span><span></span>`;
+    li.lastChild.textContent = label;
+    $("steps").appendChild(li);
+  });
+}
+
+function addRetry() {
+  if ($("retry")) return;
+  const b = document.createElement("button");
+  b.id = "retry"; b.className = "ghost"; b.type = "button"; b.textContent = "Start over";
+  b.style.marginTop = "12px"; b.onclick = reset;
+  $("progress").appendChild(b);
+}
+
+// ---- results ----
+function showResults(run) {
+  results = run.results;
+  $("progress").classList.add("hidden");
+  $("results").classList.remove("hidden");
+  const s = run.score;
+  const color = s == null ? "var(--muted)" : s >= 75 ? "var(--good)" : s >= 55 ? "var(--warn)" : "var(--bad)";
+  $("gauge").style.setProperty("--p", s ?? 0);
+  $("gauge").style.setProperty("--c", color);
+  $("scoreNum").textContent = s == null ? "–" : s;
+  $("scoreTitle").textContent = s == null ? "Match score unavailable" : `Match score: ${s}/100`;
+  $("scoreSub").textContent = s == null ? "See the match report for the reviewer's assessment."
+    : s >= 75 ? "Strong fit. Polish the gaps listed below and apply."
+    : s >= 55 ? "Partial fit. Fix the prioritized gaps before applying."
+    : "Weak fit as written. Read the gaps carefully before applying.";
+  $("tabs").innerHTML = "";
+  TABS.forEach(t => {
+    const b = document.createElement("button");
+    b.className = "tab"; b.type = "button"; b.role = "tab"; b.textContent = t.label;
+    b.disabled = !results[t.key];
+    b.onclick = () => select(t.key);
+    b.dataset.key = t.key;
+    $("tabs").appendChild(b);
+  });
+  select("match_report");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function select(key) {
+  current = key;
+  document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.key === key));
+  const md = results[key] || "_No output for this section._";
+  $("doc").innerHTML = DOMPurify.sanitize(marked.parse(md));
+  $("doc").querySelectorAll("a").forEach(a => { a.target = "_blank"; a.rel = "noopener noreferrer"; });
+}
+
+$("copy").onclick = async () => {
+  try { await navigator.clipboard.writeText(results[current] || ""); $("copy").textContent = "Copied"; }
+  catch { $("copy").textContent = "Copy failed"; }
+  setTimeout(() => $("copy").textContent = "Copy", 1500);
+};
+$("download").onclick = () => {
+  const t = TABS.find(t => t.key === current);
+  const blob = new Blob([results[current] || ""], { type: "text/markdown" });
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: t.file });
+  a.click(); URL.revokeObjectURL(a.href);
+};
+$("again").onclick = reset;
+
+function reset() {
+  clearTimeout(pollTimer); clearInterval(clockTimer);
+  try { localStorage.removeItem("lastRun"); } catch {}
+  $("retry")?.remove();
+  $("results").classList.add("hidden");
+  $("progress").classList.add("hidden");
+  $("form").classList.remove("hidden");
+  $("submit").disabled = false; $("submit").textContent = "Analyze application";
+}
+
+// Resume tracking after a page refresh.
+try { const last = localStorage.getItem("lastRun"); if (last) startTracking(last, "", ""); } catch {}
+</script>
+</body>
+</html>

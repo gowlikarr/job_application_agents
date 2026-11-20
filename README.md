@@ -191,7 +191,10 @@ job_application_agents/
 ├── knowledge/
 │   └── user_preference.txt # Sample knowledge file (not wired into the crew yet)
 └── src/job_application_agents/
-    ├── main.py             # Entry point: inputs + kickoff
+    ├── main.py             # CLI entry point: inputs + kickoff
+    ├── web/
+    │   ├── app.py          # FastAPI server: upload, run crew, progress API
+    │   └── static/index.html  # Single-page UI
     ├── crew.py             # Agents, tasks, tools, crew definition
     ├── resume.md           # YOUR resume (input)
     ├── config/
@@ -239,6 +242,49 @@ crewai run
 ```
 
 The terminal shows each agent's reasoning and tool calls as they happen. When the run finishes, the four `.md` output files are in the `job_application_agents` folder.
+
+---
+
+## Website
+
+The project includes a local website that runs the same crew from your browser. You give it a **job URL** and a **resume PDF**, and it shows the match score, tailored resume, cover letter, interview prep and job brief in tabs. Each tab has buttons to copy or download it.
+
+**Start it** from the `job_application_agents` folder:
+
+```powershell
+uv run web
+# or
+.\.venv\Scripts\web.exe
+```
+
+Then open **http://127.0.0.1:8000**.
+
+```mermaid
+sequenceDiagram
+    participant B as Browser (index.html)
+    participant S as FastAPI (web/app.py)
+    participant C as Crew (background thread)
+    B->>S: POST /api/runs (job_url, resume.pdf)
+    S->>S: validate URL + PDF, extract text (pypdfium2)
+    S->>S: save runs/<id>/resume.md
+    S->>C: JobApplicationAgents(resume_path, output_dir).crew().kickoff()
+    S-->>B: { run_id }
+    loop every 3 s
+        B->>S: GET /api/runs/<id>
+        S-->>B: status, current step, finished reports
+    end
+    C-->>S: task_callback after each agent finishes
+    S-->>B: status=done, score, all reports
+```
+
+How it works:
+- **Upload checks:** the URL must be http(s). The file must be a real PDF, no larger than 5 MB, and contain readable text. Scanned image PDFs are rejected with a clear message.
+- **Per-run isolation:** each run gets its own `runs/<id>/` folder for the extracted resume and the 4 output files. The resume tool is locked to that run's file.
+- **One run at a time:** a second submission during a run gets a "try again" message. This protects your API credits.
+- **Live progress:** after each agent finishes, a callback (`task_callback`) updates the progress tracker, and the page polls it.
+- **Safe rendering:** reports are converted from Markdown to HTML and then sanitized with DOMPurify, so text from a scraped page can't inject scripts.
+- **Local only:** the server listens on `127.0.0.1`. Set `WEB_HOST` and `WEB_PORT` to change this. Runs are kept in memory, so restarting the server forgets them, but their files stay in `runs/`.
+- `runs/` is git-ignored because it holds personal resume data.
 
 ---
 

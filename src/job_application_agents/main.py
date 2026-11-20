@@ -1,6 +1,10 @@
 #!/usr/bin/env python
+import os
 import sys
 import warnings
+
+# A set SSLKEYLOGFILE crashes Python's OpenSSL on Windows (OPENSSL_Uplink); drop it for this process.
+os.environ.pop("SSLKEYLOGFILE", None)
 
 from datetime import datetime
 

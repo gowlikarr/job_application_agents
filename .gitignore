@@ -2,3 +2,6 @@
 __pycache__/
 .DS_Store
 .crewai/
+
+# Website uploads and per-run outputs (contain personal resume data)
+runs/
