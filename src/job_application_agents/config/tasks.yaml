@@ -1,0 +1,50 @@
+analyze_job_task:
+  description: >
+    Read the job posting at {job_url} using your web scraping tool.
+    Identify the role, the company, the must-have skills, the nice-to-haves,
+    the important keywords, and the overall tone the company uses.
+  expected_output: >
+    A structured brief with: Role & Company, the top 5-8 must-have
+    requirements, key keywords/skills to mirror, and any notable periorities
+    or red flags.
+  agent: job_analyst
+
+tailor_resume_task:
+  description: >
+    Read the condidate's resume from the file 'resume.md' using your file
+    read tool. Then rewrite it to align with the job brief from the previous
+    step: emphasise matching skills and keywords, quantify achievements, and 
+    keep everything truthful (never invent experience)
+  expected_output: >
+    A tailored resume in clean markdown - a short prefessional summary aligned 
+    to the role, followed by improved, keyword-matched bullet points.
+  agent: resume_strategist
+
+cover_letter_task:
+  description: >
+    using the job brief and the tailored resume, write a personalized cover
+    letter (about 200-250 words) for this specific role and company.
+  expected_output: >
+    A ready-to-send cover letter in plain text, addressed to the hiring team,
+    with a strong opening, one or two evidence paragraphs, and a confident close.
+  agent: cover_letter_writer
+
+interview_prep_task:
+  description: >
+    Based on the job brief and the tailored resume, prepare the candidate for the 
+    interview. List the most likley questions (Technical + behavioural + Managerial)
+    and provide a strong model answer for each.
+  expected_output: >
+    A markdown Study sheet of 6-8 likely interview question, each followed 
+    by concise model answer tailored to this candidate and role
+  agent: interview_coach
+
+match_report_task:
+  description: >
+    Review the full application(job brief, tailored resume, cover letter).
+    Score how well the candidate matches the role and list the top gaps to fix
+    before applying.
+  expected_output: >
+    A short markdown report with : **Match score: X/100**, ** Stregths**,
+    **Gaps to fix before applying** (prioritized), and a one-line verdict.
+  agent: application_critics

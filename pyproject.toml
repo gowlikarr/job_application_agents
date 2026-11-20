@@ -1,0 +1,26 @@
+[project]
+name = "job_application_agents"
+version = "0.1.0"
+description = "Job_Application_agents using crewAI"
+authors = [{ name = "Your Name", email = "you@example.com" }]
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "crewai[anthropic,tools]>=1.15.42,<2.0.0",
+    "truststore>=0.10.5",
+]
+
+[project.scripts]
+job_application_agents = "job_application_agents.main:run"
+run_crew = "job_application_agents.main:run"
+train = "job_application_agents.main:train"
+replay = "job_application_agents.main:replay"
+test = "job_application_agents.main:test"
+run_with_trigger = "job_application_agents.main:run_with_trigger"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.crewai]
+type = "crew"
+project_id = "0c3424e6-18c6-421b-9174-b62b7206e1a8"
