@@ -22,7 +22,7 @@ def run():
     Run the crew.
     """
     inputs = {
-        'job_url': "https://job-boards.greenhouse.io/scaleai/jobs/4625344005"
+        'job_url': "Job_posting_URL"
     }
 
     try:
